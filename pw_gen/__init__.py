@@ -1,55 +1,51 @@
 import random
 import secrets
 import string
-import urllib.request
+import string_utils
+
+from random_word import RandomWords
 
 class Simple():
-    def __init__(self, length: int, characters = None):
-        '''A simple password'''
+    def __init__(self, length: int, *, characters = None):
+        '''A simple password (less arguments compared to complex)'''
         self.length = length
         self.characters = characters
-        self.output = []
+        self.output = ''
+        self.shuffled_output = ''
 
-    def generate(self, num_of_passwords: int):
+    def generate(self):
         '''
-        Generates a password depending on the num_of_passwords
-        and the arugments provided in the simple class
+        Generates a password depending on the num_of_passwords 
+        and the arguments provided in the simple class
         '''
         characters = ''
+
         if self.characters is None:
             characters = string.ascii_letters + string.digits
         else:
             characters = self.characters
 
-        for i in range(num_of_passwords):
-            password = ''
-            for c in range(self.length):
-                password += secrets.choice(characters)
-            self.output.append(password)
-        return self.output
+        self.output = ''
+        self.shuffled_output = ''
+        password = ''
 
-    def return_result(self, index: int):
-        '''
-        Returns the password which is at the specified index
-        in the output list.
-        '''
-        try:
-            return self.output[index]
-        except IndexError:
-            print(f'Incorrect index specified. Please provide an index relevant to the number of passwords generated')
+        for c in range(self.length):
+            password += secrets.choice(characters)
+        self.output += password
 
-    def clear_results(self):
-        '''Clears the output list if you want to make way for new passwords'''
-        self.output.clear()
+        self.shuffled_output = string_utils.shuffle(self.output)
+        return str(self.shuffled_output)
+
+    def result(self):
+        return str(self.shuffled_output.__str__())
 
 class Complex(Simple):
-    def __init__(self, length, string_method, numbers=True, special_chars=False):
+    def __init__(self, length, string_method, *, include_numbers=True, include_special_chars=False):
         '''
-        Creates a customisable password depending on length,
-        string_method, numbers and special_chars
+        Creates a customisable password depending on length, string_method, numbers and special_chars
         '''
         characters = ''
-        self.output = []
+        self.output = ''
 
         methods: dict = {
             "upper": string.ascii_uppercase,
@@ -59,49 +55,42 @@ class Complex(Simple):
 
         characters += methods[string_method]
 
-        if numbers:
+        if include_numbers:
             characters += string.digits
-        if special_chars:
+        if include_special_chars:
             characters += string.punctuation
 
         super().__init__(length=length, characters=characters)
 
 class Memorable(Simple):
-    def __init__(self, numbers=True):
-        '''A memorable password'''
-        self.numbers = numbers
-        self.output = []
+    def __init__(self, include_numbers=True):
+        '''A memorable password e.g HelloWorld123'''
+        self.include_numbers = include_numbers
+        self.output = ''
 
-    def generate(self, num_of_passwords: int):
-        '''Gets some random words'''
-        word_url = "http://svnweb.freebsd.org/csrg/share/dict/words?view=co&content-type=text/plain"
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)'}
-        req = urllib.request.Request(word_url, headers=headers)
-        response = response = urllib.request.urlopen(req)
-        long_txt = response.read().decode()
-        words = long_txt.splitlines()
+    def generate(self):
+        '''Gets a list of random words using the Random-Word library'''
+        r = RandomWords()
+        words = r.get_random_words(minLength=7, maxLength=10)
 
         '''
-        Generates the password containing 2 words
-        and numbers if self.numbers == True
+        Generates the password containing 2 words and numbers if self.numbers == True
         '''
-        for i in range(num_of_passwords):
-            password = ''
-            two_words = ''
-            for i in range(2):
-                two_words += secrets.choice(words).title()
-            password = two_words
-            if self.numbers == True:
-                for i in range(random.randint(3, 4)):
-                    password += secrets.choice(string.digits)
-            self.output.append(password)
+
+        self.output = ''
+        password = ''
+        two_words = ''
+
+        for i in range(2):
+            two_words += secrets.choice(words).title()
+        password = two_words
+
+        if self.include_numbers == True:
+            for i in range(random.randint(3, 4)):
+                password += secrets.choice(string.digits)
+        self.output += password
+
         return self.output
 
-# Test Scenarios
-
-if __name__ == "__main__":
-    var = Memorable()
-    print(var.generate(3))
-
-    var2 = Complex(100, 'both', True, True)
-    print(var2.generate(1))
+    def result(self):
+        return str(self.output.__str__())
